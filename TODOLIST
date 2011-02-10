@@ -1,0 +1,10 @@
+1 Switch project from Maven to Ant
+2 Install code static tool
+     CheckStyle
+     FindBugs
+3 Install code visualization tool
+     Toxicity
+     Tree maps http://www.panopticode.org/gallery/index.html
+4 Install Selenium
+
+5 Install junit
