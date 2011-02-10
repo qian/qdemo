@@ -1,4 +1,13 @@
 1 Switch project from Maven to Ant
+  * put all jars into repository: spring, hibernate, hsql, jetty etc.
+  * create ant build.xml and checkin ant tools
+  * basic ant tasks creation: 
+    - compile src, tests
+    - run unit tests
+    - prepare db
+    - copy resources
+    - package, deploy webapp
+    - start, stop webapp
 2 Install code static tool
      CheckStyle
      FindBugs
@@ -6,5 +15,12 @@
      Toxicity
      Tree maps http://www.panopticode.org/gallery/index.html
 4 Install Selenium
-
+  * run selenium tests in ant
 5 Install junit
+6 Setup cruise and create pipeline
+  * integrate unit tests result
+  * integrate selenium tests
+  * integrate code analysis tool result
+7 Experiment distributed build
+8 Setup cctray and big visible cruise monitor
+9 Setup iAnalyze
