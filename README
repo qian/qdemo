@@ -1,0 +1,15 @@
+Building and verifying
+
+Building the application is very easy. Just extract the application downloaded and go to the application folder (where you can see pom.xml) from command prompt, and run below maven command. First run may take a while as maven tries to download all dependencies from central repository.
+
+mvn clean install
+
+"Build is successful". Now let us run the application with the following command
+
+mvn jetty:run
+
+Hurrey. Lets see the application we built, Go to your favourite browser and access the application @
+
+http://localhost:9999/
+
+Try out Add, Edit & Delete options. 
