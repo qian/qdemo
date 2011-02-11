@@ -1,0 +1,21 @@
+<project name="QuantityImprovementDemo" default="checkstyle" basedir=".">
+  
+<taskdef resource="checkstyletask.properties" classpath="${basedir}/tools/checkstyle/checkstyle-5.3-all.jar"/>
+<property name="target.dir" value="${basedir}/target" />
+<property name="checkstyle.tool"
+          value="${basedir}/tools/checkstyle" />
+
+<target name="checkstyle"
+        description="Generates a report of code convention violations.">
+
+  <checkstyle config="${checkstyle.tool}/sun_checks.xml"
+              failureProperty="checkstyle.failure"
+              failOnViolation="false">
+    <formatter type="xml" tofile="${target.dir}/checkstyle_report.xml"/>
+    <fileset dir="src" includes="**/*.java"/>
+  </checkstyle>
+
+  <style in="${target.dir}/checkstyle_report.xml" out="${target.dir}/checkstyle_report.html" style="${checkstyle.tool}/contrib/checkstyle-simple.xsl"/>
+
+</target>
+</project>
