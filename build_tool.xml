@@ -1,6 +1,6 @@
 <project name="QuantityImprovementDemo" default="checkstyle" basedir=".">
   
-<property name="target.dir" value="${basedir}/target" />
+<property name="target.dir" value="${basedir}/target/report" />
 <property name="checkstyle.home"
           value="${basedir}/tools/checkstyle" />
 <property name="findbugs.home" value="${basedir}/tools/findbugs" />

@@ -1,6 +1,8 @@
 <project name="qdemo" default="all">
 
 	<property name="lib.dir" value="${basedir}/lib"/>
+	<property name="checkstyle.home"
+            value="${basedir}/tools/checkstyle" />
 
     <property name="src.dir" value="${basedir}/src"/>
     <property name="src.lib.dir" value="${lib.dir}/production"/>
@@ -16,6 +18,8 @@
     <property name="war.dir" value="${build.dir}/war"/>
     <property name="reports.dir" value="${build.dir}/reports"/>
     <property name="test.reports.dir" value="${reports.dir}/junit"/>
+    <property name="checkstyle.reports.dir" value="${reports.dir}/checkstyle"/>
+
 
     <property name="web.classes.dir" value="${war.dir}/WEB-INF/classes"/>
 
@@ -46,6 +50,7 @@
         <mkdir dir="${test.classes.dir}"/>
         <mkdir dir="${web.classes.dir}"/>
         <mkdir dir="${test.reports.dir}"/>
+        <mkdir dir="${checkstyle.reports.dir}"/>
     </target>
 
     <target name="-clean">
@@ -71,6 +76,22 @@
             <classpath path="${src.classes.dir}"/>
         </javac>
     </target>
+    
+    <taskdef resource="checkstyletask.properties" classpath="${checkstyle.home}/checkstyle-5.3-all.jar"/>
+    <target name="-checkstyle"
+            description="Generates a report of code convention violations.">
+
+      <checkstyle config="${checkstyle.home}/sun_checks.xml"
+                  failureProperty="checkstyle.failure"
+                  failOnViolation="false">
+        <formatter type="xml" tofile="${checkstyle.reports.dir}/checkstyle_report.xml"/>
+        <fileset dir="${src.dir}" includes="**/*.java"/>
+      </checkstyle>
+
+      <style in="${checkstyle.reports.dir}/checkstyle_report.xml" out="${checkstyle.reports.dir}/checkstyle_report.html" style="${checkstyle.home}/contrib/checkstyle-simple.xsl"/>
+
+    </target>
+    
 
     <target name="-build.war">
         <copy todir="${web.classes.dir}">
@@ -297,6 +318,7 @@
     <target name="--package" depends="--compile.all, -build.war, -package"/>
 
     <target name="clean" depends="-clean" description="clean all"/>
+    <target name="checkstyle" depends="-init, -checkstyle" description="clean all"/>
 	<target name="ut" depends="--run.unit.test" description="run unit tests"/>
     <target name="package" depends="--package" description="create war package"/>
 
