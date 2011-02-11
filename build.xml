@@ -315,10 +315,12 @@
     <target name="--compile.src" depends="--init, -compile.src"/>
     <target name="--compile.all" depends="--compile.src, -compile.test"/>
 	<target name="--run.unit.test" depends="--compile.all, -run.unit.test"/>
+	<target name="--checkstyle" depends="-init, -checkstyle"/>
     <target name="--package" depends="--compile.all, -build.war, -package"/>
 
     <target name="clean" depends="-clean" description="clean all"/>
-    <target name="checkstyle" depends="-init, -checkstyle" description="clean all"/>
+	<target name="compile" depends="--compile.all" description="compile all"/>
+    <target name="checkstyle" depends="--checkstyle" description="run checkstyle"/>
 	<target name="ut" depends="--run.unit.test" description="run unit tests"/>
     <target name="package" depends="--package" description="create war package"/>
 
