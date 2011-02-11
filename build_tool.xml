@@ -1,21 +1,40 @@
 <project name="QuantityImprovementDemo" default="checkstyle" basedir=".">
   
-<taskdef resource="checkstyletask.properties" classpath="${basedir}/tools/checkstyle/checkstyle-5.3-all.jar"/>
 <property name="target.dir" value="${basedir}/target" />
-<property name="checkstyle.tool"
+<property name="checkstyle.home"
           value="${basedir}/tools/checkstyle" />
+<property name="findbugs.home" value="${basedir}/tools/findbugs" />
 
+<path id="findbugs.path">
+  <fileset dir="${basedir}/tools/findbugs-1.3.9/lib" includes="*.jar"/>
+</path>
+
+<taskdef resource="checkstyletask.properties" classpath="${checkstyle.home}/checkstyle-5.3-all.jar"/>
+<typedef name="findbugs"
+             classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
+             classpathref="findbugs.path"
+             loaderref="findbugs.path.loader"
+             />
 <target name="checkstyle"
         description="Generates a report of code convention violations.">
 
-  <checkstyle config="${checkstyle.tool}/sun_checks.xml"
+  <checkstyle config="${checkstyle.home}/sun_checks.xml"
               failureProperty="checkstyle.failure"
               failOnViolation="false">
     <formatter type="xml" tofile="${target.dir}/checkstyle_report.xml"/>
     <fileset dir="src" includes="**/*.java"/>
   </checkstyle>
 
-  <style in="${target.dir}/checkstyle_report.xml" out="${target.dir}/checkstyle_report.html" style="${checkstyle.tool}/contrib/checkstyle-simple.xsl"/>
+  <style in="${target.dir}/checkstyle_report.xml" out="${target.dir}/checkstyle_report.html" style="${checkstyle.home}/contrib/checkstyle-simple.xsl"/>
 
 </target>
+
+<target name="findbugs">
+  <findbugs home="${findbugs.home}"
+            output="xml"
+            outputFile="${target.dir}/findbugs.xml" >
+    <sourcePath path="${basedir}/src/main" />
+  </findbugs>
+</target>
+
 </project>
