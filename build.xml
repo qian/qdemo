@@ -1,0 +1,478 @@
+<project name="WFI" default="all">
+
+    <property name="src.dir" value="${basedir}/src"/>
+    <property name="src.lib.dir" value="${basedir}/WebContent/WEB-INF/lib"/>
+    <property file="${src.dir}/config/jdbc.properties"/>
+    <property file="${src.dir}/config/csis-jdbc.properties"/>
+
+    <property name="test.dir" value="${basedir}/test"/>
+    <property name="test.lib.dir" value="${test.dir}/lib"/>
+
+    <property name="websrc.dir" value="${basedir}/WebContent"/>
+
+    <property name="build.dir" value="${basedir}/build"/>
+    <property name="ddl.dir" value="${build.dir}/ddl"/>
+    <property name="src.classes.dir" value="${build.dir}/production"/>
+    <property name="test.classes.dir" value="${build.dir}/test"/>
+    <property name="war.dir" value="${build.dir}/war"/>
+    <property name="csis.sync.dir" value="${build.dir}/csissync/"/>
+    <property name="reports.dir" value="${build.dir}/reports"/>
+    <property name="test.reports.dir" value="${reports.dir}/junit"/>
+
+    <property name="web.classes.dir" value="${war.dir}/WEB-INF/classes"/>
+
+    <property name="js.src.dir" value="${websrc.dir}/js"/>
+    <property name="jsunit.src.dir" value="${test.dir}/jsunit"/>
+    <property name="jsunit.working.dir" value="${build.dir}/jsunit"/>
+    <property name="jsunit.closeBrowsers" value="true"/>
+
+    <property name="output.dir" value="${build.dir}/output"/>
+    <property name="database.name" value="wfi"/>
+
+    <property name="port" value="9999"/>
+    <property name="context_path" value="wfi"/>
+
+    <property name="csis.db.dir" value="${basedir}\csisdb"/>
+    <property name="csis.database.name" value="WFI_CSIS"/>
+
+
+    <path id="src.lib.path">
+        <fileset dir="${src.lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="compile.src.classpath">
+        <fileset dir="${src.lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="${test.lib.dir}/jetty">
+            <include name="servlet-api-2.5-6.1.11.jar"/>
+        </fileset>
+    </path>
+
+    <path id="compile.test.classpath">
+        <path refid="compile.src.classpath"/>
+        <fileset dir="${test.lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="${test.classes.dir}"/>
+    </path>
+
+    <path id="run.server.classpath">
+        <fileset dir="${test.lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="${test.classes.dir}"/>
+    </path>
+
+    <taskdef name="dbdeploy" classname="net.sf.dbdeploy.AntTarget" classpathref="compile.test.classpath"/>
+    <target name="-db.deploy.gen.sql">
+        <dbdeploy
+                driver="${jdbc.driverClassName}"
+                url="${jdbc.url}"
+                userid="${jdbc.username}"
+                password="${jdbc.password}"
+                dir="${basedir}\db"
+                outputfile="${output.dir}\all-delta.sql"
+                dbms="mssql"
+                undoOutputfile="${output.dir}\undo-all-delta.sql"
+                />
+    </target>
+    <target name="-db.deploy" depends="-db.deploy.gen.sql">
+        <exec command="osql -U ${jdbc.username} -P ${jdbc.password} -S localhost -i ${output.dir}\all-delta.sql -d ${database.name} -n"/>
+    </target>
+
+    <target name="-csis.db.deploy">
+        <exec command="osql -U ${csis.jdbc.username} -P ${csis.jdbc.password} -S localhost -i ${csis.db.dir}\schema.sql -n"/>
+    </target>
+
+    <target name="-init">
+        <mkdir dir="${src.classes.dir}"/>
+        <mkdir dir="${war.dir}"/>
+        <mkdir dir="${test.classes.dir}"/>
+        <mkdir dir="${web.classes.dir}"/>
+        <mkdir dir="${test.reports.dir}"/>
+        <mkdir dir="${ddl.dir}"/>
+        <mkdir dir="${output.dir}"/>
+    </target>
+
+    <target name="-clean">
+        <delete dir="${build.dir}" failonerror="false"/>
+    </target>
+
+    <target name="-compile.src">
+        <javac classpathref="compile.src.classpath" memorymaximumsize="128m" fork="true" encoding="UTF-8"
+               srcdir="${src.dir}"
+               destdir="${src.classes.dir}" debug="true" source="1.5" target="1.5"/>
+        <copy todir="${src.classes.dir}">
+            <fileset dir="${src.dir}">
+                <include name="**/*.xml"/>
+                <include name="**/*.properties"/>
+                <include name="**/*.xls"/>
+                <include name="**/*.hbm"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="-generate.ddl">
+        <taskdef name="schemaexport" classname="org.hibernate.tool.hbm2ddl.SchemaExportTask">
+            <classpath>
+                <path refid="compile.src.classpath"/>
+                <pathelement location="${src.classes.dir}"/>
+            </classpath>
+        </taskdef>
+        <schemaexport
+                properties="${src.dir}/config/jdbc.properties"
+                quiet="no"
+                text="yes"
+                drop="no"
+                delimiter=";"
+                output="${ddl.dir}/schema.sql">
+            <fileset dir="src">
+                <include name="**/*.hbm.xml"/>
+            </fileset>
+        </schemaexport>
+    </target>
+
+    <!--<target name="-configure.test.hibernate">
+        <copy file="${test.dir}/config/test.hibernate.cfg.xml" tofile="${web.classes.dir}/hibernate.cfg.xml"
+              overwrite="true"/>
+    </target>-->
+
+    <!--<target name="-configure.artifact.hibernate">-->
+    <!--<copy file="${src.dir}/hibernate.cfg.xml" todir="${web.classes.dir}" overwrite="true"/>-->
+    <!--</target>-->
+
+
+    <target name="-compile.test">
+        <javac classpathref="compile.test.classpath" memorymaximumsize="128m" fork="true" encoding="UTF-8"
+               destdir="${test.classes.dir}" debug="true">
+            <src path="${test.dir}/func"/>
+            <src path="${test.dir}/tool"/>
+            <src path="${test.dir}/unit"/>
+            <src path="${test.dir}/preparedata"/>
+            <classpath path="${src.classes.dir}"/>
+        </javac>
+        <copy file="${test.dir}/unit/test-context.xml" tofile="${test.classes.dir}/test-context.xml"/>
+    </target>
+
+    <target name="-build.war">
+        <copy todir="${web.classes.dir}">
+            <fileset dir="${src.classes.dir}"/>
+        </copy>
+        <copy todir="${war.dir}">
+            <fileset dir="${websrc.dir}">
+                <exclude name="**/.svn"/>
+                <exclude name="**/jdt-compiler.jar"/>
+                <exclude name="**/servlet.jar"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="-package">
+        <war destfile="${build.dir}/WFI.war">
+            <fileset dir="${war.dir}"/>
+        </war>
+    </target>
+
+    <target name="-prepare.csis.synchronization.jar">
+        <copy todir="${csis.sync.dir}">
+            <fileset dir="${src.classes.dir}"/>
+        </copy>
+    </target>
+
+    <target name="-package.csis.synchronization.jar">
+        <mkdir dir="${build.dir}/synchronization"/>
+
+        <pathconvert property="class.path.param" pathsep=" " refid="src.lib.path">
+            <map from="${src.lib.dir}/" to=""/>
+        </pathconvert>
+
+        <jar destfile="${build.dir}/synchronization/CsisSync.jar">
+            <manifest>
+                <attribute name="Main-Class" value="com.cosco.wfi.sync.CsisUserInfoSynchronizeMain"/>
+                <attribute name="Class-Path" value="${class.path.param}"/>
+            </manifest>
+            <fileset dir="${csis.sync.dir}"/>
+        </jar>
+        <copy todir="${build.dir}/synchronization">
+            <fileset dir="${src.lib.dir}">
+            </fileset>
+        </copy>
+    </target>
+    <!--output="${basedir}/server.log"-->
+    <target name="-start.server">
+        <java classname="JettyServer">
+            <arg value="${war.dir}"/>
+            <classpath>
+                <path refid="run.server.classpath"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="-stop.server">
+        <get src="http://localhost:${port}/${context_path}/jetty/stop" dest="stop" ignoreerrors="true"/>
+    </target>
+
+    <target name="-initDBSchema">
+        <sql userid="${jdbc.username}"
+             password="${jdbc.password}"
+             classpathref="compile.src.classpath"
+             driver="${jdbc.driverClassName}"
+             url="jdbc:jtds:sqlserver://localhost:1433;DatabaseName=master;">
+            IF NOT EXISTS (SELECT NAME FROM MASTER..SYSDATABASES WHERE NAME IN ('${database.name}'))
+            CREATE DATABASE ${database.name};
+
+            USE wfi;
+            IF NOT EXISTS (SELECT * FROM SYSOBJECTS WHERE OBJECTPROPERTY(OBJECT_ID('changelog'),'istable')=1)
+            CREATE TABLE changelog (
+            change_number INTEGER NOT NULL,
+            delta_set VARCHAR(10) NOT NULL,
+            start_dt DATETIME NOT NULL,
+            complete_dt DATETIME NULL,
+            applied_by VARCHAR(100) NOT NULL,
+            description VARCHAR(500) NOT NULL
+            );
+
+            IF NOT EXISTS (SELECT * FROM SYSOBJECTS WHERE name='Pkchangelog')
+            ALTER TABLE changelog ADD CONSTRAINT Pkchangelog PRIMARY KEY (change_number, delta_set);
+        </sql>
+    </target>
+
+    <target name="-run.unit.test">
+        <junit printsummary="yes" haltonfailure="yes">
+            <classpath>
+                <pathelement location="${src.classes.dir}"/>
+                <pathelement location="${test.classes.dir}"/>
+                <fileset dir="${test.lib.dir}">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <fileset dir="${src.lib.dir}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+
+            <formatter type="xml"/>
+
+            <batchtest fork="yes" todir="${test.reports.dir}">
+                <fileset dir="${test.dir}/unit">
+                    <include name="**/*Test.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <junitreport todir="${test.reports.dir}">
+            <fileset dir="${test.reports.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${test.reports.dir}/html"/>
+        </junitreport>
+    </target>
+
+    <target name="-run.function.test">
+        <junit printsummary="yes" haltonfailure="yes" maxmemory="256m">
+            <classpath>
+                <pathelement location="${test.classes.dir}"/>
+                <pathelement location="${src.classes.dir}"/>
+                <fileset dir="${test.lib.dir}">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <fileset dir="${src.lib.dir}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+
+            <formatter type="xml"/>
+
+            <batchtest fork="yes" todir="${test.reports.dir}">
+                <fileset dir="${test.dir}/func">
+                    <include name="**/*Test*.java"/>
+                    <exclude name="**/Abstract*Test*.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <junitreport todir="${test.reports.dir}">
+            <fileset dir="${test.reports.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${test.reports.dir}/html"/>
+        </junitreport>
+    </target>
+
+    <target name="-start.server.internal">
+        <java classname="JettyServer" spawn="false" fork="true">
+            <arg value="${war.dir}"/>
+            <classpath>
+                <path refid="run.server.classpath"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="-run.function.test.parallel">
+        <parallel>
+            <daemons>
+                <antcall target="-start.server.internal"/>
+            </daemons>
+            <sequential>
+                <waitfor maxwait="120" maxwaitunit="second" checkevery="5" checkeveryunit="second">
+                    <http url="http://localhost:${port}/${context_path}"/>
+                </waitfor>
+                <antcall target="-run.function.test"/>
+                <antcall target="-stop.server"/>
+            </sequential>
+        </parallel>
+    </target>
+
+
+    <target name="-create.test.data">
+        <java classname="com.cosco.wfi.preparedata.PrepareDataFactory">
+            <classpath>
+                <pathelement location="${src.classes.dir}"/>
+                <path refid="compile.test.classpath"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="-clear.all.data">
+        <java classname="com.cosco.wfi.preparedata.CleanDataFactory">
+            <classpath>
+                <pathelement location="${src.classes.dir}"/>
+                <path refid="compile.test.classpath"/>
+            </classpath>
+        </java>
+    </target>
+
+    <!-- check style -->
+    <property name="checkstyle.dir" value="${test.lib.dir}/checkstyle"/>
+    <taskdef resource="checkstyletask.properties" classpath="${checkstyle.dir}/checkstyle-all-4.4.jar"/>
+    <target name="-checkstyle">
+        <property name="styleReport.dir" value="${reports.dir}/style"/>
+        <mkdir dir="${styleReport.dir}"/>
+
+        <checkstyle config="${checkstyle.dir}/check_rules.xml"
+                    failonviolation="true"
+                    maxerrors="10">
+            <formatter type="plain"/>
+            <classpath refid="compile.test.classpath"/>
+            <classpath location="${src.classes.dir}"/>
+            <fileset dir="${src.dir}">
+                <include name="**/*.java"/>
+            </fileset>
+        </checkstyle>
+    </target>
+
+    <!--find duplicated code-->
+    <property name="cpd.dir" value="${test.lib.dir}/pmd"/>
+    <path id="cpd.classpath">
+        <fileset dir="${cpd.dir}"/>
+    </path>
+    <taskdef name="cpd" classpathref="cpd.classpath" classname="net.sourceforge.pmd.cpd.CPDTask"/>
+
+    <target name="-findDuplicatedCode">
+        <property name="cpdReport.dir" value="${reports.dir}/cpd"/>
+        <mkdir dir="${cpdReport.dir}"/>
+        <cpd minimumtokencount="100" format="xml" outputfile="${cpdReport.dir}/cpd.xml">
+            <fileset dir="${src.dir}">
+                <include name="**/*.java"/>
+            </fileset>
+        </cpd>
+        <xslt in="${cpdReport.dir}/cpd.xml" style="${cpd.dir}/cpdhtml.xslt"
+              out="${cpdReport.dir}/cpd.html"/>
+    </target>
+
+    <target name="-check.dependency">
+        <echo message="${ant.home}"/>
+        <property name="dependencyReport.dir" value="${reports.dir}/dependency"/>
+        <mkdir dir="${dependencyReport.dir}"/>
+        <jdepend format="xml" outputfile="${dependencyReport.dir}/dependency.xml">
+            <exclude name="java.*"/>
+            <exclude name="javax.*"/>
+            <exclude name="net.*"/>
+            <exclude name="org.*"/>
+            <exclude name="junit.*"/>
+            <exclude name="jxl"/>
+            <exclude name="jxl.*"/>
+            <exclude name="com.opensymphony.*"/>
+            <exclude name="de.*"/>
+            <exclude name="com.sun.*"/>
+
+            <classespath>
+                <path location="${src.classes.dir}"/>
+            </classespath>
+        </jdepend>
+        <xslt in="${dependencyReport.dir}/dependency.xml"
+              style="${ant.home}/etc/jdepend-frames.xsl"
+              out="${dependencyReport.dir}/dependecny.html"/>
+    </target>
+
+    <target name="-start.selenium">
+        <java jar="${test.lib.dir}/selenium/selenium-server.jar" fork="true">
+        </java>
+    </target>
+
+    <target name="-jsunit">
+        <copy todir="${jsunit.working.dir}" overwrite="true">
+            <fileset dir="${jsunit.src.dir}"/>
+        </copy>
+        <copy todir="${jsunit.working.dir}/js" overwrite="true">
+            <fileset dir="${js.src.dir}"/>
+        </copy>
+        <mkdir dir="${test.reports.dir}/jsunit"/>
+        <ant dir="${jsunit.working.dir}" inheritall="false" inheritrefs="false">
+            <property name="logsDirectory" value="${test.reports.dir}/jsunit"/>
+            <property name="closeBrowsersAfterTestRuns" value="${jsunit.closeBrowsers}"/>
+        </ant>
+    </target>
+
+
+    <target name="--init" depends="-stop.server, -clean, -init"/>
+    <target name="--compile.all" depends=" --compile.src, -compile.test"/>
+    <target name="--compile.src" depends="-clean, -init, -compile.src"/>
+    <target name="--compile.and.unit.test" depends="--compile.all, -run.unit.test"/>
+
+    <target name="--package" depends="--compile.all, -build.war, -package"/>
+    <target name="--start.server"
+            depends="-stop.server, --compile.all, -build.war, -start.server"/>
+    <target name="--run.func.test"
+            depends="-build.war, -run.function.test.parallel"/>
+    <target name="--create.test.data" depends="--compile.src, -compile.test, -create.test.data"/>
+    <target name="--clear.all.data" depends="--compile.src, -compile.test, -clear.all.data"/>
+
+
+    <target name="--check.dependency" depends="--init,-compile.src,-check.dependency"/>
+    <target name="--compile.and.func.test" depends="--compile.all, --run.func.test"/>
+    <target name="--all"
+            depends=" --init, --db.deploy, -csis.db.deploy, --clear.all.data, --compile.and.unit.test, --run.func.test, -jsunit, -checkstyle, -package"/>
+    <target name="--full.build" depends="--compile.and.unit.test, --run.func.test, --package, --package.csis.sync.jar"/>
+    <target name="--start.server.without.compile" depends="-start.server"/>
+    <target name="--generate.ddl" depends="-init, -compile.src, -generate.ddl"/>
+    <target name="--db.deploy" depends="-init, -initDBSchema, -db.deploy"/>
+    <target name="--package.csis.sync.jar"
+            depends="--compile.all, -prepare.csis.synchronization.jar,-package.csis.synchronization.jar"/>
+
+    <target name="start.server" depends="--start.server" description="start jetty server"/>
+    <target name="stop.server" depends="-stop.server" description="stop jetty server"/>
+    <target name="start.server.without.compile" depends="--start.server.without.compile"
+            description="start jetty server without compile"/>
+    <target name="clean" depends="-clean" description="clean all"/>
+    <!--<target name="restore.database" depends="-restore.database" description="restore database from backup file"/>-->
+    <target name="package" depends="--package" description="create ear package"/>
+    <target name="ut" depends="--compile.and.unit.test" description="run all unit tests"/>
+    <target name="ft" depends="--compile.and.func.test" description="run all func tests"/>
+    <target name="full.build" depends="--full.build" description="full build"/>
+    <target name="all" depends="--all" description="compile and run all tests"/>
+    <target name="checkstyle" depends="-checkstyle" description="check style"/>
+    <target name="generate.ddl" depends="--generate.ddl" description="generate ddl from hibernate mapping files"/>
+    <target name="db.deploy" depends="--db.deploy" description="migrate database"/>
+    <target name="create.test.data" depends="--create.test.data" description="create test data"/>
+    <target name="clear.all.data" depends="--clear.all.data" description="clean test data"/>
+    <target name="start.selenium" depends="-start.selenium" description="start selenium server"/>
+    <target name="reset.test.data" depends="clear.all.data, create.test.data" description="reset test data"/>
+    <target name="jsunit" depends="-init,-jsunit" description="run javascript unit test"/>
+    <target name="csis.db.deploy" depends="-csis.db.deploy" description="create partial CSIS db for synchronization"/>
+    <target name="package.csis.sync.jar" depends="--package.csis.sync.jar"
+            description="create jars to synchronize Csis to WfI"/>
+
+</project>
