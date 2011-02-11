@@ -3,6 +3,11 @@
 	<property name="lib.dir" value="${basedir}/lib"/>
 	<property name="checkstyle.home"
             value="${basedir}/tools/checkstyle" />
+  <property name="findbugs.home" value="${basedir}/tools/findbugs-1.3.9" />
+
+   <path id="findbugs.path">
+     <fileset dir="${findbugs.home}/lib" includes="*.jar"/>
+   </path>
 
     <property name="src.dir" value="${basedir}/src"/>
     <property name="src.lib.dir" value="${lib.dir}/production"/>
@@ -19,6 +24,7 @@
     <property name="reports.dir" value="${build.dir}/reports"/>
     <property name="test.reports.dir" value="${reports.dir}/junit"/>
     <property name="checkstyle.reports.dir" value="${reports.dir}/checkstyle"/>
+    <property name="findbugs.reports.dir" value="${reports.dir}/findbugs"/>
 
 
     <property name="web.classes.dir" value="${war.dir}/WEB-INF/classes"/>
@@ -51,6 +57,7 @@
         <mkdir dir="${web.classes.dir}"/>
         <mkdir dir="${test.reports.dir}"/>
         <mkdir dir="${checkstyle.reports.dir}"/>
+        <mkdir dir="${findbugs.reports.dir}"/>
     </target>
 
     <target name="-clean">
@@ -90,6 +97,21 @@
 
       <style in="${checkstyle.reports.dir}/checkstyle_report.xml" out="${checkstyle.reports.dir}/checkstyle_report.html" style="${checkstyle.home}/contrib/checkstyle-simple.xsl"/>
 
+    </target>
+    
+    <typedef name="findbugs"
+                 classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
+                 classpathref="findbugs.path"
+                 loaderref="findbugs.path.loader"
+                 />
+                 
+    <target name="-findbugs">
+      <findbugs home="${findbugs.home}"
+                output="html"
+                outputFile="${findbugs.reports.dir}/findbugs.html" >
+        <sourcePath path="${srcdir}" />
+        <class location="${src.classes.dir}" />
+      </findbugs>
     </target>
     
 
@@ -316,11 +338,14 @@
     <target name="--compile.all" depends="--compile.src, -compile.test"/>
 	<target name="--run.unit.test" depends="--compile.all, -run.unit.test"/>
 	<target name="--checkstyle" depends="-init, -checkstyle"/>
-    <target name="--package" depends="--compile.all, -build.war, -package"/>
+    <target name="--package" depends="-build.war, -package"/>
+	<target name="--all" depends="--init, --compile.all, --run.unit.test, --checkstyle, -findbugs, --package"/>
 
+	<target name="all" depends="--all" description="run all"/>
     <target name="clean" depends="-clean" description="clean all"/>
 	<target name="compile" depends="--compile.all" description="compile all"/>
     <target name="checkstyle" depends="--checkstyle" description="run checkstyle"/>
+    <target name="findbugs" depends="-findbugs" description="run findbugs"/>
 	<target name="ut" depends="--run.unit.test" description="run unit tests"/>
     <target name="package" depends="--package" description="create war package"/>
 
