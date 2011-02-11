@@ -108,6 +108,7 @@
     <target name="-findbugs">
       <findbugs home="${findbugs.home}"
                 output="html"
+				jvmArgs="-Xms256m -Xmx800m"
                 outputFile="${findbugs.reports.dir}/findbugs.html" >
         <sourcePath path="${srcdir}" />
         <class location="${src.classes.dir}" />
