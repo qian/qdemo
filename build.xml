@@ -90,19 +90,6 @@
         </war>
     </target>
 
-    <!--target name="-start.server">
-        <java classname="JettyServer">
-            <arg value="${war.dir}"/>
-            <classpath>
-                <path refid="run.server.classpath"/>
-            </classpath>
-        </java>
-    </target>
-
-    <target name="-stop.server">
-        <get src="http://localhost:${port}/${context_path}/jetty/stop" dest="stop" ignoreerrors="true"/>
-    </target>
-
     <target name="-run.unit.test">
         <junit printsummary="yes" haltonfailure="yes">
             <classpath>
@@ -133,7 +120,20 @@
         </junitreport>
     </target>
 
-    <target name="-run.function.test">
+    <!--target name="-start.server">
+        <java classname="JettyServer">
+            <arg value="${war.dir}"/>
+            <classpath>
+                <path refid="run.server.classpath"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="-stop.server">
+        <get src="http://localhost:${port}/${context_path}/jetty/stop" dest="stop" ignoreerrors="true"/>
+    </target-->
+
+    <!--target name="-run.function.test">
         <junit printsummary="yes" haltonfailure="yes" maxmemory="256m">
             <classpath>
                 <pathelement location="${test.classes.dir}"/>
@@ -293,10 +293,11 @@
     <target name="--init" depends="-clean, -init"/>
     <target name="--compile.src" depends="--init, -compile.src"/>
     <target name="--compile.all" depends="--compile.src, -compile.test"/>
-
+	<target name="--run.unit.test" depends="--compile.all, -run.unit.test"/>
     <target name="--package" depends="--compile.all, -build.war, -package"/>
 
     <target name="clean" depends="-clean" description="clean all"/>
+	<target name="ut" depends="--run.unit.test" description="run unit tests"/>
     <target name="package" depends="--package" description="create war package"/>
 
 </project>
