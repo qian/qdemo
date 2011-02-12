@@ -210,13 +210,15 @@
 		</emma>
     </target>
 
-     <target name="jetty.run">
+     <target name="server.run">
        <jetty tempDirectory="jetty-temp">
          <webApp name="qdemo" warfile="${war.dir}" contextpath="/" />
        </jetty>
      </target>
      
      <target name="run.functional.test" depends="-compile.test">
+        <antcall target="start.selenium"></antcall>
+       
          <junit printsummary="yes" haltonfailure="yes">
              <classpath>
                  <pathelement location="${src.classes.dir}"/>
@@ -230,14 +232,14 @@
              </classpath>
 
              <formatter type="xml"/>
-
+                         
              <batchtest fork="yes" todir="${test.reports.dir}">
                  <fileset dir="${test.dir}/functional">
                      <include name="**/*Test.java"/>
                  </fileset>
              </batchtest>
          </junit>
-
+         <antcall target="stop.selenium"></antcall>
      </target>
     
     <!-- <target name="start.server">
@@ -409,13 +411,13 @@
         </ant>
     </target-->
     
-    <target name="start-selenium">
+    <target name="start.selenium">
         <java jar="${test.lib.dir}/selenium-server-standalone-2.0b1.jar"
               fork="true"
               spawn="true">
         </java>
 
-        <waitfor maxwait="30" maxwaitunit="second">
+        <waitfor maxwait="5" maxwaitunit="second">
             <and>
                  <socket server="localhost" port="4444"/>
                  <http url="http://localhost:4444/selenium-server/core/index.html" errorsBeginAt="404"/>
@@ -423,7 +425,7 @@
         </waitfor>
     </target>
     
-    <target name="stop-selenium">
+    <target name="stop.selenium">
         <get taskname="selenium-shutdown" src="http://localhost:4444/selenium-server/driver/?cmd=shutDownSeleniumServer"
             dest="result.txt" ignoreerrors="true" />
         <echo taskname="selenium-shutdown" message="DGF Errors during shutdown are expected" />
