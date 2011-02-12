@@ -14,12 +14,23 @@ public class CreateUserScenarioTest extends SeleneseTestCase {
                // We instantiate and start the browser
         }
 
-        public void testNew() throws Exception {
+        public void testCanCreateuser() throws Exception {
              selenium.open("/");
              selenium.waitForPageToLoad("30000");
              assertTrue(selenium.isTextPresent("List Of Users"));
-             selenium.click("Add New User");
+             selenium.click("link=Add New User");
              selenium.waitForPageToLoad("30000");
+             
+             selenium.type("id=firstName", "Anchuan");
+             selenium.type("id=lastName", "Qian");
+             selenium.click("xpath=//input[@value='Save User']");
+             selenium.waitForPageToLoad("30000");
+             
+             assertTrue(selenium.isTextPresent("Anchuan"));
+             assertTrue(selenium.isTextPresent("Qian"));
+             
+             
+             //selenium.waitForPageToLoad("30000");
              
              // selenium.type("q", "selenium rc");
              // selenium.click("btnG");

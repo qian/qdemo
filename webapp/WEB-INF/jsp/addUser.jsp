@@ -18,11 +18,11 @@
         <s:if test="%{user.id != null}">
             <s:hidden name="user.id"/>
         </s:if>
-        First Name:<s:textfield name="user.firstName" maxlength="20" id="user.firstName"/>
+        First Name:<s:textfield name="user.firstName" maxlength="20" id="firstName"/>
         <br/>
-        Last Name:<s:textfield name="user.lastName" maxlength="20" id="user.lastName"/>
+        Last Name:<s:textfield name="user.lastName" maxlength="20" id="lastName"/>
         <br/>
-        <input type="submit" title="Save User" value="Save User"/>
+        <input type="submit" id="saveUser" title="Save User" value="Save User"/>
     </s:form>
     <br/>
 </div>

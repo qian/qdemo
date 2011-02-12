@@ -219,7 +219,10 @@
      <target name="run.functional.test" depends="-compile.test">
         <antcall target="start.selenium"></antcall>
        
-         <junit printsummary="yes" haltonfailure="yes">
+         <junit showoutput="true"
+                outputtoformatters="true"
+                printsummary="yes" 
+                haltonfailure="yes">
              <classpath>
                  <pathelement location="${src.classes.dir}"/>
                  <pathelement location="${test.classes.dir}"/>
@@ -231,7 +234,7 @@
                  </fileset>
              </classpath>
 
-             <formatter type="xml"/>
+             <formatter type="brief" usefile="false"/>
                          
              <batchtest fork="yes" todir="${test.reports.dir}">
                  <fileset dir="${test.dir}/functional">
