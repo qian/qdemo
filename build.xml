@@ -45,8 +45,8 @@
 
     <path id="run.server.classpath">
         <fileset dir="${test.lib.dir}">
-            <include name="**/*.jar"/>
-        </fileset>
+             <include name="**/*.jar"/>
+         </fileset>
         <pathelement location="${test.classes.dir}"/>
     </path>
 
@@ -163,8 +163,16 @@
             <report format="frames" todir="${test.reports.dir}/html"/>
         </junitreport>
     </target>
+    
+     <taskdef classpathref="run.server.classpath" resource="tasks.properties" loaderref="jetty.loader" />
 
-    <!--target name="-start.server">
+     <target name="jetty.run">
+       <jetty tempDirectory="jetty-temp">
+         <webApp name="qdemo" warfile="${war.dir}" contextpath="/" />
+       </jetty>
+     </target>
+    
+    <!-- <target name="start.server">
         <java classname="JettyServer">
             <arg value="${war.dir}"/>
             <classpath>
@@ -173,9 +181,9 @@
         </java>
     </target>
 
-    <target name="-stop.server">
-        <get src="http://localhost:${port}/${context_path}/jetty/stop" dest="stop" ignoreerrors="true"/>
-    </target-->
+    <target name="stop.server">
+        <get src="http://localhost:8080/${context_path}/jetty/stop" dest="stop" ignoreerrors="true"/>
+    </target> -->
 
     <!--target name="-run.function.test">
         <junit printsummary="yes" haltonfailure="yes" maxmemory="256m">
@@ -332,7 +340,28 @@
             <property name="closeBrowsersAfterTestRuns" value="${jsunit.closeBrowsers}"/>
         </ant>
     </target-->
+    
+    <!-- <target name="start-server">
+        <java jar="${test.lib.dir}/selenium-server-standalone-2.0b1.jar"
+              fork="true"
+              spawn="true">
 
+            <arg line="-proxyInjectionMode"/>
+        </java>
+
+        <waitfor maxwait="30" maxwaitunit="second">
+            <and>
+                 <socket server="localhost" port="4444"/>
+                 <http url="http://localhost:4444/selenium-server/core/index.html" errorsBeginAt="404"/>
+            </and>
+        </waitfor>
+    </target>
+    
+    <target name="stop-server">
+        <get taskname="selenium-shutdown" src="http://localhost:4444/selenium-server/driver/?cmd=shutDownSeleniumServer"
+            dest="result.txt" ignoreerrors="true" />
+        <echo taskname="selenium-shutdown" message="DGF Errors during shutdown are expected" />
+    </target> -->
 
     <target name="--init" depends="-clean, -init"/>
     <target name="--compile.src" depends="--init, -compile.src"/>
