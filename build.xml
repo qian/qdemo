@@ -9,6 +9,8 @@
      <fileset dir="${findbugs.home}/lib" includes="*.jar"/>
    </path>
 
+	<property name="tools.lib.dir" value="${lib.dir}/tools"/>
+
     <property name="src.dir" value="${basedir}/src"/>
     <property name="src.lib.dir" value="${lib.dir}/production"/>
 
@@ -20,12 +22,12 @@
     <property name="build.dir" value="${basedir}/build"/>
     <property name="src.classes.dir" value="${build.dir}/production"/>
     <property name="test.classes.dir" value="${build.dir}/test"/>
+	<property name="emma.classes.dir" value="${build.dir}/emma"/>
     <property name="war.dir" value="${build.dir}/war"/>
     <property name="reports.dir" value="${build.dir}/reports"/>
     <property name="test.reports.dir" value="${reports.dir}/junit"/>
     <property name="checkstyle.reports.dir" value="${reports.dir}/checkstyle"/>
     <property name="findbugs.reports.dir" value="${reports.dir}/findbugs"/>
-
 
     <property name="web.classes.dir" value="${war.dir}/WEB-INF/classes"/>
 
@@ -43,6 +45,12 @@
         <pathelement location="${test.classes.dir}"/>
     </path>
 
+	<path id="tools.classpath">
+        <fileset dir="${tools.lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
     <path id="run.server.classpath">
         <fileset dir="${test.lib.dir}">
              <include name="**/*.jar"/>
@@ -54,6 +62,7 @@
         <mkdir dir="${src.classes.dir}"/>
         <mkdir dir="${war.dir}"/>
         <mkdir dir="${test.classes.dir}"/>
+		<mkdir dir="${emma.classes.dir}"/>
         <mkdir dir="${web.classes.dir}"/>
         <mkdir dir="${test.reports.dir}"/>
         <mkdir dir="${checkstyle.reports.dir}"/>
@@ -135,10 +144,11 @@
     </target>
 
     <target name="-run.unit.test">
-        <junit printsummary="yes" haltonfailure="yes">
+        <junit printsummary="yes" haltonfailure="yes" fork="true" forkmode="perBatch">
             <classpath>
-                <pathelement location="${src.classes.dir}"/>
+                <pathelement location="${emma.classes.dir}"/>
                 <pathelement location="${test.classes.dir}"/>
+				<pathelement location="${tools.lib.dir}/emma.jar"/>
                 <fileset dir="${test.lib.dir}">
                     <include name="**/*.jar"/>
                 </fileset>
@@ -154,6 +164,9 @@
                     <include name="**/*Test.java"/>
                 </fileset>
             </batchtest>
+
+			<jvmarg value="-Demma.coverage.out.file=${reports.dir}/emma/coverage.emma" />
+			<jvmarg value="-Demma.coverage.out.merge=false" />
         </junit>
 
         <junitreport todir="${test.reports.dir}">
@@ -165,6 +178,37 @@
     </target>
     
      <taskdef classpathref="run.server.classpath" resource="tasks.properties" loaderref="jetty.loader" />
+
+	<taskdef resource="emma_ant.properties" classpathref="tools.classpath" />
+	<property name="emma.enabled" value="true" />
+	
+	<target name="-emma.instrument" description="intrument src classes">
+		<emma enabled="${emma.enabled}" >
+		    <instr instrpath="${src.classes.dir}"
+		         destdir="${emma.classes.dir}"
+		         metadatafile="${reports.dir}/emma/metadata.emma"
+		         merge="true"
+		    />
+		</emma>
+	</target>
+	
+	<target name="-emma.report" description="generate emma report" >
+		<emma enabled="${emma.enabled}" >
+		    <report sourcepath="${src.dir}"
+		          sort="+block,+name,+method,+class"
+		          metrics="method:70,block:80,line:80,class:100"
+		    >
+		    <fileset dir="${reports.dir}/emma" >
+		        <include name="*.emma" />
+		    </fileset>
+
+		    <html outfile="${reports.dir}/emma/coverage.html"
+		        depth="method"
+		        columns="name,class,method,block,line"
+		    />
+		    </report>
+		</emma>
+    </target>
 
      <target name="jetty.run">
        <jetty tempDirectory="jetty-temp">
@@ -388,10 +432,10 @@
     <target name="--init" depends="-clean, -init"/>
     <target name="--compile.src" depends="--init, -compile.src"/>
     <target name="--compile.all" depends="--compile.src, -compile.test"/>
-	<target name="--run.unit.test" depends="--compile.all, -run.unit.test"/>
+	<target name="--run.unit.test" depends="--compile.all, -emma.instrument, -run.unit.test"/>
 	<target name="--checkstyle" depends="-init, -checkstyle"/>
     <target name="--package" depends="-build.war, -package"/>
-	<target name="--all" depends="--init, --compile.all, --run.unit.test, --checkstyle, -findbugs, --package"/>
+	<target name="--all" depends="--init, --compile.all, --run.unit.test, -emma.report, --checkstyle, -findbugs, --package"/>
 
 	<target name="all" depends="--all" description="run all"/>
     <target name="clean" depends="-clean" description="clean all"/>
@@ -399,6 +443,7 @@
     <target name="checkstyle" depends="--checkstyle" description="run checkstyle"/>
     <target name="findbugs" depends="-findbugs" description="run findbugs"/>
 	<target name="ut" depends="--run.unit.test" description="run unit tests"/>
+	<target name="coverage" depends="-emma.report" description="generate emma report"/>
     <target name="package" depends="--package" description="create war package"/>
 
 </project>
