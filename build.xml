@@ -172,7 +172,7 @@
        </jetty>
      </target>
      
-     <target name="run.functional.test">
+     <target name="run.functional.test" depends="-compile.test">
          <junit printsummary="yes" haltonfailure="yes">
              <classpath>
                  <pathelement location="${src.classes.dir}"/>

@@ -17,7 +17,10 @@ public class CreateUserScenarioTest extends SeleneseTestCase {
         public void testNew() throws Exception {
              selenium.open("/");
              selenium.waitForPageToLoad("30000");
-             assertTrue(selenium.isTextPresent("Results * for selenium rc"));
+             assertTrue(selenium.isTextPresent("List Of Users"));
+             selenium.click("Add New User");
+             selenium.waitForPageToLoad("30000");
+             
              // selenium.type("q", "selenium rc");
              // selenium.click("btnG");
              // selenium.waitForPageToLoad("30000");
