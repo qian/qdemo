@@ -4,6 +4,7 @@
   * basic ant tasks creation: 
     - compile src, tests
     - run unit tests
+    - java test coverage
     - prepare db
     - copy resources
     - package, deploy webapp
@@ -24,3 +25,5 @@
 7 Experiment distributed build
 8 Setup cctray and big visible cruise monitor
 9 Setup iAnalyze
+10 Mingle latest version
+  - postgresql, mysql
