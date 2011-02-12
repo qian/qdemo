@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="24">
+  <server artifactsdir="artifacts">
+    <license user="Huang Liang">WVCQOEyQ2a8XT2NHKNAe3qsA6cq7o0DGQTzrJYN4BgZir232V5kfqWBj2b4N
+rj/jFjEm/hqFtFyHjsCeUrOobh18Es3rjbRkADNEJa4/c2IoMO3DKHm5TW50
+S8bb4m9PfnLz31OYOzrYO7z/t04e4OUssquMew3OUo5Va0+RDOx8aj9iKWTN
+h8q5Ti0bdDTlkjgRNfxq0/jU/1ui5kx3kHpPGXUID0mr7rybOVzF+QL/iDo1
+/pe6VvjEk7Y+GmWETLKpGB2vK0cxs7abBvlBGmOOR/kN2j/RbQSdmIMc4wFZ
+6Jdsrr0/WIO0Ba/iL/wZnwLJnYmDw0xq5K2S1wXxDQ==</license>
+  </server>
+  <pipelines group="defaultGroup">
+    <pipeline name="test2">
+      <materials>
+        <svn url="svn://localhost" username="" password="" />
+      </materials>
+      <stage name="defaultStage">
+        <jobs>
+          <job name="defaultJob">
+            <tasks>
+              <exec command="echo hello" />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+    <pipeline name="test">
+      <materials>
+        <git url="git://github.com/exceedhl/rcr-test.git" />
+      </materials>
+      <stage name="defaultStage">
+        <jobs>
+          <job name="defaultJob">
+            <tasks>
+              <exec command="echo hello" />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+    <pipeline name="qdemo">
+      <materials>
+        <git url="git://github.com/qian/qdemo.git" />
+      </materials>
+      <stage name="clean.compile">
+        <jobs>
+          <job name="clean">
+            <tasks>
+              <ant buildfile="build.xml" target="clean" />
+            </tasks>
+          </job>
+          <job name="compile">
+            <tasks>
+              <ant buildfile="build.xml" target="compile" />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+      <stage name="run.unit.test">
+        <jobs>
+          <job name="run">
+            <tasks>
+              <ant buildfile="build.xml" target="ut" />
+            </tasks>
+            <tabs>
+              <tab name="UnitTests" path="junit/html/all-tests.html" />
+            </tabs>
+            <artifacts>
+              <test src="build/reports/junit" />
+            </artifacts>
+          </job>
+        </jobs>
+      </stage>
+      <stage name="code.static.check">
+        <jobs>
+          <job name="checkstyle">
+            <tasks>
+              <ant buildfile="build.xml" target="checkstyle" />
+            </tasks>
+            <tabs>
+              <tab name="Checkstyle" path="checkstyle/checkstyle_report.html" />
+            </tabs>
+            <artifacts>
+              <artifact src="build/reports/checkstyle" />
+            </artifacts>
+          </job>
+          <job name="findbugs">
+            <tasks>
+              <ant buildfile="build.xml" target="findbugs" />
+            </tasks>
+            <tabs>
+              <tab name="Findbugs" path="findbugs/findbugs.html" />
+            </tabs>
+            <artifacts>
+              <artifact src="build/reports/findbugs" />
+            </artifacts>
+          </job>
+        </jobs>
+      </stage>
+      <stage name="package">
+        <jobs>
+          <job name="package">
+            <tasks>
+              <ant buildfile="build.xml" target="package" />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+  </pipelines>
+  <agents>
+    <agent hostname="hl.corporate.thoughtworks.com" ipaddress="10.211.55.2" uuid="cda17ae5-8e19-4677-ad10-b15a64bbed88" />
+  </agents>
+</cruise>
+
