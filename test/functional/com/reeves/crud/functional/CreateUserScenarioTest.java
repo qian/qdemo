@@ -10,16 +10,18 @@ public class CreateUserScenarioTest extends SeleneseTestCase {
   // We create our Selenium test case
 
         public void setUp() throws Exception {
-          setUp("http://www.google.com/", "*firefox");
+          setUp("http://localhost:8080/", "*firefox");
                // We instantiate and start the browser
         }
 
         public void testNew() throws Exception {
              selenium.open("/");
-             selenium.type("q", "selenium rc");
-             selenium.click("btnG");
              selenium.waitForPageToLoad("30000");
              assertTrue(selenium.isTextPresent("Results * for selenium rc"));
+             // selenium.type("q", "selenium rc");
+             // selenium.click("btnG");
+             // selenium.waitForPageToLoad("30000");
+             // assertTrue(selenium.isTextPresent("Results * for selenium rc"));
              // These are the real test steps
        }
   }

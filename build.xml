@@ -171,6 +171,30 @@
          <webApp name="qdemo" warfile="${war.dir}" contextpath="/" />
        </jetty>
      </target>
+     
+     <target name="run.functional.test">
+         <junit printsummary="yes" haltonfailure="yes">
+             <classpath>
+                 <pathelement location="${src.classes.dir}"/>
+                 <pathelement location="${test.classes.dir}"/>
+                 <fileset dir="${test.lib.dir}">
+                     <include name="**/*.jar"/>
+                 </fileset>
+                 <fileset dir="${src.lib.dir}">
+                     <include name="**/*.jar"/>
+                 </fileset>
+             </classpath>
+
+             <formatter type="xml"/>
+
+             <batchtest fork="yes" todir="${test.reports.dir}">
+                 <fileset dir="${test.dir}/functional">
+                     <include name="**/*Test.java"/>
+                 </fileset>
+             </batchtest>
+         </junit>
+
+     </target>
     
     <!-- <target name="start.server">
         <java classname="JettyServer">
@@ -341,12 +365,10 @@
         </ant>
     </target-->
     
-    <!-- <target name="start-server">
+    <target name="start-selenium">
         <java jar="${test.lib.dir}/selenium-server-standalone-2.0b1.jar"
               fork="true"
               spawn="true">
-
-            <arg line="-proxyInjectionMode"/>
         </java>
 
         <waitfor maxwait="30" maxwaitunit="second">
@@ -357,11 +379,11 @@
         </waitfor>
     </target>
     
-    <target name="stop-server">
+    <target name="stop-selenium">
         <get taskname="selenium-shutdown" src="http://localhost:4444/selenium-server/driver/?cmd=shutDownSeleniumServer"
             dest="result.txt" ignoreerrors="true" />
         <echo taskname="selenium-shutdown" message="DGF Errors during shutdown are expected" />
-    </target> -->
+    </target>
 
     <target name="--init" depends="-clean, -init"/>
     <target name="--compile.src" depends="--init, -compile.src"/>
